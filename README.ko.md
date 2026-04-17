@@ -1,6 +1,6 @@
 # Harness Design — 웹사이트 & 앱 빌더
 
-> **v1.0.0**
+> **v1.1.0**
 
 짧은 아이디어를 Anthropic의 **Planner → Generator → Evaluator** 3-에이전트 하네스를 통해 완성된 웹사이트/앱으로 만드는 Claude Code 스킬.
 
@@ -27,14 +27,17 @@
 
 ## 주요 기능
 
-- **UI/UX 최적화** — Planner가 디자인 토큰, 정보 아키텍처, 반응형 전략, 접근성 요구사항 출력
+- **UI/UX 최적화** — Planner가 디자인 토큰, 정보 아키텍처, 반응형 전략, 접근성 요구사항, 유저 페르소나, 상태 인벤토리 출력
 - **디자인 시스템 우선** — Generator가 컴포넌트 구현 전 CSS 변수로 토큰 구현
 - **9축 루브릭** — Design Quality (2배), Originality (2배), Craft, Functionality, Responsive, Accessibility, Interaction Design, Visual Hierarchy, UX Heuristics
+- **Few-shot 캘리브레이션 앵커** — 기준별 점수 1/3/5 예시로 Evaluator의 첫 실행부터 채점 기반 확보
+- **차등 하드 임계값** — 2배 가중 < 4 = FAIL, 1배 가중 < 3 = FAIL
 - **Nielsen 10원칙** 휴리스틱 평가 내장
 - **반응형 테스트** — Playwright로 375px / 768px / 1280px 뷰포트 스크린샷
 - **접근성 검증** — WCAG AA 대비비, 키보드 네비, 포커스 표시, ARIA, axe-core
-- **방향 전환 통제** — Evaluator의 명시적 `REDIRECT` 없이 Generator가 디자인 방향을 바꿀 수 없음
-- **V1/V2 모드** — 전체 스프린트 루프 (Sonnet) 또는 간소화 단일 패스 (Opus)
+- **방향 전환 통제** — Evaluator의 명시적 `REDIRECT` 없이 Generator가 디자인 방향을 바꿀 수 없음; `design_memo.md`로 컨텍스트 리셋 기억상실 방지
+- **V1/V2 모드** — 전체 스프린트 루프 (Sonnet) 또는 간소화 단일 패스 + 3-5 라운드 캡 (Opus)
+- **Evaluator 튜닝 워크플로우** — 로그 읽기 → 판단 차이 발견 → 프롬프트 수정 → 재실행 사이클
 
 ## 파일 핸드오프
 
@@ -54,6 +57,7 @@ handoff.md           Generator → 다음 세션 (남은 작업)
 - **프롬프팅이 캐릭터를 결정** — "museum quality"라 쓰면 전부 미술관 같아짐. 루브릭은 참조가 아닌 품질을 기술해야.
 - **Evaluator 자기 설득** — 튜닝 안 된 Evaluator는 문제를 찾고도 "별거 아니다"며 승인. 여러 튜닝 사이클 필요.
 - **핵심 인터랙션 스텁** — 버튼은 있는데 작동 안 함. "UI 존재" ≠ "인터랙션 end-to-end 작동."
+- **급진적 간소화 실패** — 여러 하네스 컴포넌트를 한꺼번에 제거하면 품질 저하. 하나씩 제거해야 무엇이 핵심인지 드러남.
 
 ## 비용/시간 벤치마크 (논문 기준)
 
@@ -61,7 +65,7 @@ handoff.md           Generator → 다음 세션 (남은 작업)
 |---|---|---|---|
 | 단독 에이전트 | ~20분 | ~$9 | 핵심 기능 고장 |
 | 전체 하네스 (V1) | ~6시간 | ~$200 | 완성도 높은 결과물 |
-| 간소화 하네스 (V2) | ~3시간 50분 | ~$124.70 | 2시간+ 일관된 세션 |
+| 간소화 하네스 (V2) | ~3시간 50분 | ~$124.70 | 2시간+ 일관 세션 |
 
 ## 설치
 
@@ -76,6 +80,18 @@ handoff.md           Generator → 다음 세션 (남은 작업)
 ```
 
 웹사이트/앱 디자인 요청 시 자동으로 활성화됩니다.
+
+## 변경 이력
+
+### v1.1.0
+- Few-shot 캘리브레이션 앵커 추가 (Design Quality, Originality, Craft, Functionality 각 점수 1/3/5)
+- 차등 하드 임계값 추가: 2배 가중 < 4 → FAIL, 1배 가중 < 3 → FAIL
+- "Building Effective Agents" 인용 및 간결성 원칙 추가
+- "급진적 간소화 실패" 교훈 추가
+- 간소화 단일 세션 하네스 (PROMPT 5)에 3-5 라운드 캡 추가
+
+### v1.0.0
+- 9축 루브릭, UI/UX 방법론, V1/V2 모드, 논문 교훈 포함 초기 릴리스
 
 ## 라이선스
 
