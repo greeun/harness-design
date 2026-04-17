@@ -1,6 +1,6 @@
 ---
 name: harness-design
-version: 1.0.0
+version: 1.1.0
 description: Use when the user wants to design/build a website, landing page, web app, or mobile app from a short idea or requirements, and needs a long-running autonomous build loop. Operationalizes Anthropic's "Harness Design for Long-Running Application Development" (2026) as a Planner → Generator → Evaluator harness with file-based handoffs, sprint contracts, context resets, rubric-based design grading, and safeguards against self-evaluation bias and context anxiety. Trigger phrases — EN: "design a website", "build a landing page", "build an app", "build a web app", "build a mobile app", "design the UI for X", "build X from scratch", "long-running coding agent", "planner generator evaluator", "harness design". KO: "웹사이트 디자인", "웹사이트 제작", "랜딩페이지 제작", "앱 디자인", "앱 제작", "웹앱 만들어줘", "모바일 앱 만들어줘", "UI 디자인해줘", "처음부터 만들어줘", "하네스 디자인", "하네스 프롬프트", "플래너 제너레이터 이밸류에이터", "장시간 자율 코딩", "자기평가 편향", "컨텍스트 불안", "스프린트 계약", "파일 기반 핸드오프".
 ---
 
@@ -233,7 +233,34 @@ Extended criteria for full-stack / backend slices:
 - Robustness: Does it survive messy real-world input?
 - Usability: Can a first-time user complete primary flows without guessing?
 
-Iterate 5–15 rounds per design slice. If all criteria ≥4 and adversarial probes clean, stop. If still thrashing after 15, escalate — the spec or the sprint contract is probably the problem.
+Verdict rules:
+- Any 2×-weighted score (Design Quality, Originality) < 4 → FAIL.
+- Any 1×-weighted score < 3 → FAIL.
+- All criteria meet thresholds AND adversarial probes clean → PASS.
+
+Few-shot calibration anchors (use these to ground your scores):
+
+Design Quality:
+  1 = No visible design system. Colors, fonts, spacing are browser defaults or random. No consistent identity.
+  3 = A theme is present but relies on template patterns. Some coherence but no distinctive choices.
+  5 = Strong, cohesive identity with deliberate color, type, and spatial decisions that serve the content. A designer could articulate the intent.
+
+Originality:
+  1 = Generic hero + three-column features + gradient CTA. Indistinguishable from any AI-generated landing page.
+  3 = Some custom choices visible (non-default color palette, intentional typography) but overall layout follows common patterns.
+  5 = Layout, interaction patterns, or visual language show decisions unique to this product. Not template-derivable.
+
+Craft:
+  1 = Inconsistent spacing, misaligned elements, no typographic hierarchy. Loading/empty/error states missing.
+  3 = Spacing and typography are consistent. Most states implemented. Minor alignment or contrast issues.
+  5 = Pixel-precise spacing from the design token system. All states (loading, empty, error, success, disabled) polished. Contrast ratios verified.
+
+Functionality:
+  1 = Core interactions are stubbed — buttons exist but don't trigger operations. Data doesn't persist.
+  3 = Primary flows work end-to-end. Some secondary flows incomplete. No broken core interactions.
+  5 = All flows from spec.md work. Edge cases handled. State changes verified in DB/API, not just UI.
+
+Iterate 5–15 rounds per design slice. If still thrashing after 15, escalate — the spec or the sprint contract is probably the problem.
 
 Output — write to `critique.md`:
 
@@ -302,7 +329,7 @@ You are building a website/app end-to-end in one session. Follow this discipline
 5. GRADE yourself against this rubric — be harsh, not kind:
    - Design Quality, Originality, Craft, Functionality (UI)
    - Correctness, Robustness, Usability (full-stack)
-6. If any score < 4 or any Definition-of-Done bullet is unverified, iterate. Do NOT wrap up because context feels tight — finish the current increment, write handoff.md, stop cleanly.
+6. If any score < 4 or any Definition-of-Done bullet is unverified, iterate. Cap self-evaluation at 3–5 rounds. If still failing after 5 rounds, the scope exceeds single-session capability — switch to the full three-agent loop. Do NOT wrap up because context feels tight — finish the current increment, write handoff.md, stop cleanly.
 
 Never self-congratulate. Report facts: what was built, what was verified with what evidence, what is left.
 ```
@@ -341,6 +368,8 @@ The article documents two distinct versions. Understand the difference to choose
 | **Total** | **3 hr 50 min** | **$124.70** |
 
 ### Choosing V1 vs V2
+
+As noted in Anthropic's *"Building Effective Agents"*: *find the simplest solution possible, and only increase complexity when needed.* The authors first tried removing multiple harness components at once ("radical simplification"). This failed to replicate V1's quality. The productive approach was removing one component at a time, measuring the impact, and keeping only what remained load-bearing.
 
 - **V1 (full loop):** When using Sonnet-class models, or when the task is at the edge of the model's solo capability. More expensive but catches more.
 - **V2 (simplified):** When using Opus-class models on tasks within their extended range. Cheaper, faster, still with Planner + Evaluator guardrails.
